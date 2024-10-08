@@ -1,0 +1,47 @@
+version: "3.8"
+services:
+  penpot-postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=penpot
+      - POSTGRES_USER=penpot
+      - POSTGRES_PASSWORD=penpot
+    volumes:
+      - penpot-postgres-data:/var/lib/postgresql/data
+    restart: always
+
+  penpot-redis:
+    image: redis:6
+    restart: always
+
+  penpot-backend:
+    build: ./backend
+    environment:
+      - REDIS_HOST=penpot-redis
+      - POSTGRES_HOST=penpot-postgres
+      - POSTGRES_DB=penpot
+      - POSTGRES_USER=penpot
+      - POSTGRES_PASSWORD=penpot
+      # Uncomment and adjust the following if you're using a custom domain
+      # - PENPOT_HOST=your-domain.com
+      # - PENPOT_PROTOCOL=https 
+    ports:
+      - "8080:8080" # Expose the backend port
+    depends_on:
+      - penpot-postgres
+      - penpot-redis
+    restart: always
+
+  penpot-frontend:
+    build: ./frontend
+    environment:
+      - REACT_APP_API_URL=http://penpot-backend:8080 
+      # Use the backend container name and exposed port
+    ports:
+      - "9001:80"
+    depends_on:
+      - penpot-backend
+    restart: always
+
+volumes:
+  penpot-postgres-data:
